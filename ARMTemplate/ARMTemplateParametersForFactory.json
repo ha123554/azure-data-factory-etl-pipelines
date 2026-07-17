@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "hadeeqadataFactory"
+        },
+        "ls_onPremp_files_password": {
+            "value": ""
+        },
+        "ls_dataLake_accountKey": {
+            "value": ""
+        },
+        "Is_azuresql_password": {
+            "value": ""
+        },
+        "ls_onPremp_files_properties_typeProperties_host": {
+            "value": "F:\\hadeeqa_ADF_project"
+        },
+        "ls_onPremp_files_properties_typeProperties_userId": {
+            "value": "DESKTOP-K5KN1H4\\dell"
+        },
+        "ls_dataLake_properties_typeProperties_url": {
+            "value": "https://adfhadeeqastorage.dfs.core.windows.net/"
+        },
+        "ls_github_properties_typeProperties_url": {
+            "value": "https://raw.githubusercontent.com/"
+        },
+        "Is_azuresql_properties_typeProperties_server": {
+            "value": "projectmyadf.database.windows.net"
+        },
+        "Is_azuresql_properties_typeProperties_database": {
+            "value": "adfprojectdb"
+        },
+        "Is_azuresql_properties_typeProperties_userName": {
+            "value": "adminadmin"
+        }
+    }
+}

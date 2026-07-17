@@ -1,0 +1,1359 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "hadeeqadataFactory"
+        },
+        "ls_onPremp_files_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'ls_onPremp_files'"
+        },
+        "ls_dataLake_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'ls_dataLake'"
+        },
+        "Is_azuresql_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'Is_azuresql'"
+        },
+        "ls_onPremp_files_properties_typeProperties_host": {
+            "type": "string",
+            "defaultValue": "F:\\hadeeqa_ADF_project"
+        },
+        "ls_onPremp_files_properties_typeProperties_userId": {
+            "type": "string",
+            "defaultValue": "DESKTOP-K5KN1H4\\dell"
+        },
+        "ls_dataLake_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://adfhadeeqastorage.dfs.core.windows.net/"
+        },
+        "ls_github_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/"
+        },
+        "Is_azuresql_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "projectmyadf.database.windows.net"
+        },
+        "Is_azuresql_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "adfprojectdb"
+        },
+        "Is_azuresql_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "adminadmin"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_onPrem_file')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "firstcopy.parquet",
+                        "folderPath": "onprem",
+                        "fileSystem": "bronze"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/dsonpremParam')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_onPremp_files",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "p_file_name": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "FileServerLocation",
+                        "fileName": {
+                            "value": "@dataset().p_file_name",
+                            "type": "Expression"
+                        }
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_onPremp_files')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_onpremsink_csv')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "p_filename": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@dataset().p_filename",
+                            "type": "Expression"
+                        },
+                        "folderPath": "on_prem",
+                        "fileSystem": "bronze"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_onPrem')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_onPremp_files",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "FileServerLocation",
+                        "fileName": "DimAirline.csv"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_onPremp_files')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_API_sink')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "DimAirport.json",
+                        "folderPath": "github",
+                        "fileSystem": "bronze"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_api_source')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_github",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": "anshlambagit/AnshLambaYoutube/refs/heads/main/ADF_Project/DimAirport.json"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_github')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_sqlsource')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Is_azuresql",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/Is_azuresql')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_sql')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "factBooking",
+                        "folderPath": "sql"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_emptyjson')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "empty.json",
+                        "folderPath": "monitor/emptyjson",
+                        "fileSystem": "bronze"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_lookup')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_dataLake",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "lastlaoad.json",
+                        "folderPath": "monitor/lastloaad",
+                        "fileSystem": "bronze"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_dataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/hadeeqaSelfHosted')]",
+            "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "SelfHosted",
+                "typeProperties": {}
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_onPremp_files')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "FileServer",
+                "typeProperties": {
+                    "host": "[parameters('ls_onPremp_files_properties_typeProperties_host')]",
+                    "userId": "[parameters('ls_onPremp_files_properties_typeProperties_userId')]",
+                    "password": {
+                        "type": "SecureString",
+                        "value": "[parameters('ls_onPremp_files_password')]"
+                    }
+                },
+                "connectVia": {
+                    "referenceName": "hadeeqaSelfHosted",
+                    "type": "IntegrationRuntimeReference"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/integrationRuntimes/hadeeqaSelfHosted')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_dataLake')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('ls_dataLake_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('ls_dataLake_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_github')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('ls_github_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Is_azuresql')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "server": "[parameters('Is_azuresql_properties_typeProperties_server')]",
+                    "database": "[parameters('Is_azuresql_properties_typeProperties_database')]",
+                    "encrypt": "mandatory",
+                    "trustServerCertificate": false,
+                    "authenticationType": "SQL",
+                    "userName": "[parameters('Is_azuresql_properties_typeProperties_userName')]",
+                    "password": {
+                        "type": "SecureString",
+                        "value": "[parameters('Is_azuresql_password')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/onpremp_ingestion')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "ForEachfile",
+                        "type": "ForEach",
+                        "dependsOn": [],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@pipeline().parameters.files",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "migrateOnPremfiles",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 2,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "DelimitedTextSource",
+                                            "storeSettings": {
+                                                "type": "FileServerReadSettings",
+                                                "recursive": true,
+                                                "enablePartitionDiscovery": false
+                                            },
+                                            "formatSettings": {
+                                                "type": "DelimitedTextReadSettings"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "DelimitedTextSink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobFSWriteSettings"
+                                            },
+                                            "formatSettings": {
+                                                "type": "DelimitedTextWriteSettings",
+                                                "quoteAllText": true,
+                                                "fileExtension": ".txt"
+                                            }
+                                        },
+                                        "enableStaging": false,
+                                        "translator": {
+                                            "value": "@if(equals(item().filename,'DimPassenger.csv'),pipeline().parameters.p_mapping_passenger,if(equals(item().filename,'DimAirline.csv'),pipeline().parameters.p_mapping_airline,pipeline().parameters.p_mapping_flight))",
+                                            "type": "Expression"
+                                        }
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "dsonpremParam",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "p_file_name": {
+                                                    "value": "@item().filename",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "ds_onpremsink_csv",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "p_filename": {
+                                                    "value": "@item().filename",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "files": {
+                        "type": "array",
+                        "defaultValue": [
+                            {
+                                "filename": "DimPassenger.csv"
+                            },
+                            {
+                                "filename": "DimAirline.csv"
+                            },
+                            {
+                                "filename": "DimFlight.csv"
+                            }
+                        ]
+                    },
+                    "p_mapping_flight": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "flight_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "flight_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "flight_number",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "flight_number",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "departure_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "departure_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "arrival_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "arrival_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    },
+                    "p_mapping_passenger": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "passenger_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "passenger_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "full_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "full_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "gender",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "gender",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "age",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "age",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    },
+                    "p_mapping_airline": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "airline_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "airline_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "airline_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "airline_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-07-05T11:02:49Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/dsonpremParam')]",
+                "[concat(variables('factoryId'), '/datasets/ds_onpremsink_csv')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/API_ingestion')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "WebAPICall",
+                        "type": "WebActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "method": "GET",
+                            "headers": {},
+                            "url": {
+                                "value": "https://raw.githubusercontent.com/anshlambagit/AnshLambaYoutube/refs/heads/main/ADF_Project/DimAirport.json",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "CopyAPIData",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "WebAPICall",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "mappings": [
+                                    {
+                                        "source": {
+                                            "path": "$['airport_id']"
+                                        },
+                                        "sink": {
+                                            "path": "$['airport_id']"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['airport_name']"
+                                        },
+                                        "sink": {
+                                            "path": "$['airport_name']"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['city']"
+                                        },
+                                        "sink": {
+                                            "path": "$['city']"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['country']"
+                                        },
+                                        "sink": {
+                                            "path": "$['country']"
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_api_source",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_API_sink",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-07-05T11:52:25Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_api_source')]",
+                "[concat(variables('factoryId'), '/datasets/ds_API_sink')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/SQLToDataLake')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "CopySQLData",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "LastLoad",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            },
+                            {
+                                "activity": "latestload",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "SELECT *FROM dbo.FactBookings\nWHERE booking_date > '@{activity('LastLoad').output.firstRow.lastlaod}'\nAND booking_date<= '@{activity('latestload').output.firstRow.lastload}'",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_sqlsource",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_sql",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "LastLoad",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "ds_lookup",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        }
+                    },
+                    {
+                        "name": "latestload",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "SELECT Max(booking_date) as lastload\nFROM dbo.FactBookings",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "ds_sqlsource",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        }
+                    },
+                    {
+                        "name": "watermark",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "CopySQLData",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "additionalColumns": [
+                                    {
+                                        "name": "lastlaod",
+                                        "value": {
+                                            "value": "@activity('latestload').output.firstRow.lastload",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                ],
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_emptyjson",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_lookup",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "variables": {
+                    "v_now": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-07-16T11:36:25Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_sqlsource')]",
+                "[concat(variables('factoryId'), '/datasets/ds_sql')]",
+                "[concat(variables('factoryId'), '/datasets/ds_lookup')]",
+                "[concat(variables('factoryId'), '/datasets/ds_emptyjson')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/parentPipeline')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "ExecuteOnPremp",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "onpremp_ingestion",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "files": {
+                                    "value": "@pipeline().parameters.files",
+                                    "type": "Expression"
+                                },
+                                "p_mapping_flight": {
+                                    "value": "@pipeline().parameters.p_mapping_flight",
+                                    "type": "Expression"
+                                },
+                                "p_mapping_passenger": {
+                                    "value": "@pipeline().parameters.p_mapping_passenger",
+                                    "type": "Expression"
+                                },
+                                "p_mapping_airline": {
+                                    "value": "@pipeline().parameters.p_mapping_airline",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "ExecuteAPI",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ExecuteOnPremp",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "API_ingestion",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "ExecuteIncremental",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ExecuteAPI",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "SQLToDataLake",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "files": {
+                        "type": "array",
+                        "defaultValue": [
+                            {
+                                "filename": "DimPassenger.csv"
+                            },
+                            {
+                                "filename": "DimAirline.csv"
+                            },
+                            {
+                                "filename": "DimFlight.csv"
+                            }
+                        ]
+                    },
+                    "p_mapping_flight": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "flight_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "flight_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "flight_number",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "flight_number",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "departure_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "departure_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "arrival_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "arrival_time",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    },
+                    "p_mapping_passenger": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "passenger_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "passenger_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "full_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "full_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "gender",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "gender",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "age",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "age",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    },
+                    "p_mapping_airline": {
+                        "type": "object",
+                        "defaultValue": {
+                            "type": "TabularTranslator",
+                            "mappings": [
+                                {
+                                    "source": {
+                                        "name": "airline_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "airline_id",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "airline_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "airline_name",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                },
+                                {
+                                    "source": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    },
+                                    "sink": {
+                                        "name": "country",
+                                        "type": "String",
+                                        "physicalType": "String"
+                                    }
+                                }
+                            ],
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                                "allowDataTruncation": true,
+                                "treatBooleanAsNumber": false
+                            }
+                        }
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-07-16T11:47:27Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/onpremp_ingestion')]",
+                "[concat(variables('factoryId'), '/pipelines/API_ingestion')]",
+                "[concat(variables('factoryId'), '/pipelines/SQLToDataLake')]"
+            ]
+        }
+    ]
+}
