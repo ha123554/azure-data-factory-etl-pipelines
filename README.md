@@ -4,14 +4,14 @@
 
 This project demonstrates the implementation of Azure Data Factory (ADF) ETL pipelines for automated data ingestion and orchestration. The solution integrates data from multiple sources, including REST APIs, on-premises systems, and SQL databases, and moves data into Azure Data Lake for further processing.
 
-## 🚀 Pipelines
+## Pipelines
 
 - API_ingestion
 - onprem_ingestion
 - parentPipeline
 - SQLToDataLake
 
-## 🛠 Technologies Used
+##  Technologies Used
 
 - Azure Data Factory
 - Azure SQL Database
@@ -19,24 +19,13 @@ This project demonstrates the implementation of Azure Data Factory (ADF) ETL pip
 - REST API
 - JSON (ARM Templates)
 
-## 📂 Repository Structure
+##  Repository Structure
 
 ```
 ├── ARMTemplate/
 ├── Screenshots/
 └── README.md
 ```
-
-## 📸 Project Screenshots
-
-### Pipeline Overview
-![Pipeline Overview](Screenshots/Pipeline-Overview.png)
-
-### API Ingestion Pipeline
-![API Ingestion](Screenshots/API-Ingestion.png)
-
-### SQL to Data Lake Pipeline
-![SQL to Data Lake](Screenshots/SQLToDataLake.png)
 
 ## 📄 ARM Templates
 
